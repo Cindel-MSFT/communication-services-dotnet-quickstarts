@@ -22,10 +22,10 @@ var callConfigurationSection = builder.Configuration.GetSection(nameof(CallConfi
 builder.Services.Configure<CallConfiguration>(callConfigurationSection);
 var client = new CallAutomationClient(callConfigurationSection["ConnectionString"]);
 
-//Below is example for overrideing the PMA url
+//Below is example for overriding the PMA url
 //var client = new CallAutomationClient(new Uri("https://x-pma-uswe-04.plat.skype.com:6448"), callConfigurationSection["ConnectionString"]);
 
-//Below eventHandler showcases the Recogniztion Speech and SpeechOrDigit and Play SSML features
+//Below eventHandler showcases the Recognition Speech and SpeechOrDigit and Play SSML features
 //var eventHandler = new ContosoBankWorkflowHandler(playSourceBaseId);
 
 //Below eventHandler showcases the Recognize Choices and Play TTS features
@@ -69,9 +69,11 @@ app.MapPost("/api/incomingCall", async (
             }
         }
         var jsonObject = GetJsonObject(eventGridEvent.Data);
-        var callerId = GetCallerId(jsonObject);
+        //var callerId = GetCallerId(jsonObject);
+        var textToRead = GetTextToRead();
         var incomingCallContext = GetIncomingCallContext(jsonObject);
-        var callbackUri = new Uri(callbackUriBase + $"/api/callbacks/{Guid.NewGuid()}?callerId={callerId}");
+        //var callbackUri = new Uri(callbackUriBase + $"/api/callbacks/{Guid.NewGuid()}?callerId={callerId}");
+        var callbackUri = new Uri(callbackUriBase + $"/api/callbacks/{Guid.NewGuid()}?textToRead={textToRead}");
         var options = new AnswerCallOptions(incomingCallContext, callbackUri)
         {
             AzureCognitiveServicesEndpointUrl = new Uri(cogSvcUri)
@@ -111,6 +113,11 @@ JsonObject GetJsonObject(BinaryData data)
 string GetCallerId(JsonObject jsonObject)
 {
     return (string)(jsonObject["from"]["rawId"]);
+}
+
+string GetTextToRead()
+{
+    return "Hello World";
 }
 
 string GetIncomingCallContext(JsonObject jsonObject)
