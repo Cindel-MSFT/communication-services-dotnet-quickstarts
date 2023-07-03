@@ -15,14 +15,15 @@ namespace CogSvcIvrSamples
         }
 
         public async Task HandleAsync(
-            string callerId,
+            //string callerId,
+            string textToRead,
             CallAutomationEventBase @event,
             CallConnection callConnection,
             CallMedia callConnectionMedia)
         {
             if (@event is CallConnected)
             {
-                await HandleWelcomMessageAsync(callConnectionMedia, callerId);
+                await HandleWelcomMessageAsync(callConnectionMedia, /*callerId*/textToRead);
             }
 
             if (@event is RecognizeCompleted)
@@ -48,10 +49,10 @@ namespace CogSvcIvrSamples
                             await HandleOutageReportRecordedMessageAsync(callConnectionMedia);
                         }
 
-                        if (labelDetected.Equals(ContosoElectricitySelections.MainMenu, StringComparison.OrdinalIgnoreCase))
+                        /*if (labelDetected.Equals(ContosoElectricitySelections.MainMenu, StringComparison.OrdinalIgnoreCase))
                         {
                             await HandleMainMenuAsync(callConnectionMedia, callerId);
-                        }
+                        }*/
 
                         if (labelDetected.Equals(ContosoElectricitySelections.SpeakToAgent, StringComparison.OrdinalIgnoreCase))
                         {
@@ -107,7 +108,7 @@ namespace CogSvcIvrSamples
 
                 //await callConnection.HangUpAsync(forEveryone: true);
             }
-            if (@event is PlayCompleted { OperationContext: "GreetingMessage" })
+            /*if (@event is PlayCompleted { OperationContext: "GreetingMessage" })
             {
                 await HandleAddressConfirmationAsync(callConnectionMedia, callerId);
             }
@@ -115,7 +116,7 @@ namespace CogSvcIvrSamples
             if (@event is PlayCompleted { OperationContext: "NoOutageReportedMessage" })
             {
                 await HandleReportOutageMenuAsync(callConnectionMedia, callerId);
-            }
+            }*/
 
             // hang up call when these prompts complete
             if (@event is PlayCompleted { OperationContext: "ReportRecordedMessage" } ||
@@ -156,10 +157,11 @@ namespace CogSvcIvrSamples
             await callConnectionMedia.PlayToAllAsync(playOptionsForAgentUnavailable);
         }
 
-        async Task HandleWelcomMessageAsync(CallMedia callConnectionMedia, string callerId)
+        async Task HandleWelcomMessageAsync(CallMedia callConnectionMedia, string /*callerId*/textToRead)
         {
-            var greetingPlaySource = $"Hello {GetCustomerName(callerId)}, welcome to Contoso Electricity. I’m Sam, I can help provide you with information about planned and unplanned outages in your area."
-                .ToSsmlPlaySource();
+            /*var greetingPlaySource = $"Hello {GetCustomerName(callerId)}, welcome to Contoso Electricity. I’m Sam, I can help provide you with information about planned and unplanned outages in your area."
+                .ToSsmlPlaySource();*/
+            var greetingPlaySource = $"Hello {textToRead}".ToSsmlPlaySource();
             await callConnectionMedia.PlayToAllAsync(new PlayToAllOptions(greetingPlaySource) { OperationContext = "GreetingMessage", Loop = false });
         }
 

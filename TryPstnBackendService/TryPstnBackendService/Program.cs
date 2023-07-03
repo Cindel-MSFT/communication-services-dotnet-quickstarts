@@ -2,8 +2,8 @@
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
 using Azure.Messaging.EventGrid.SystemEvents;
-using CallAutomation_CogSvcIvr;
-using CogSvcIvrSamples;
+using CallAutomation_TryPstnBackendService;
+using TryPstnBackendService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -22,16 +22,8 @@ var callConfigurationSection = builder.Configuration.GetSection(nameof(CallConfi
 builder.Services.Configure<CallConfiguration>(callConfigurationSection);
 var client = new CallAutomationClient(callConfigurationSection["ConnectionString"]);
 
-//Below is example for overriding the PMA url
-//var client = new CallAutomationClient(new Uri("https://x-pma-uswe-04.plat.skype.com:6448"), callConfigurationSection["ConnectionString"]);
-
-//Below eventHandler showcases the Recognition Speech and SpeechOrDigit and Play SSML features
-//var eventHandler = new ContosoBankWorkflowHandler(playSourceBaseId);
-
 //Below eventHandler showcases the Recognize Choices and Play TTS features
-var eventHandler = new ContosoElectricityWorkflowHandler(playSourceBaseId);
-
-//var callbackUriBase = callConfigurationSection["AppBaseUri"];
+ContosoWorkflowHandler eventHandler = null;
 
 //Use below if setting up the tunnel using VS Dev tunnel 
 var callbackUriBase = Environment.GetEnvironmentVariable("VS_TUNNEL_URL").TrimEnd('/');
@@ -69,10 +61,10 @@ app.MapPost("/api/incomingCall", async (
             }
         }
         var jsonObject = GetJsonObject(eventGridEvent.Data);
-        //var callerId = GetCallerId(jsonObject);
         var textToRead = GetTextToRead();
+        var callerId = GetCallerId(jsonObject);
+        eventHandler = new ContosoWorkflowHandler(playSourceBaseId, callerId);
         var incomingCallContext = GetIncomingCallContext(jsonObject);
-        //var callbackUri = new Uri(callbackUriBase + $"/api/callbacks/{Guid.NewGuid()}?callerId={callerId}");
         var callbackUri = new Uri(callbackUriBase + $"/api/callbacks/{Guid.NewGuid()}?textToRead={textToRead}");
         var options = new AnswerCallOptions(incomingCallContext, callbackUri)
         {
@@ -87,7 +79,6 @@ app.MapPost("/api/incomingCall", async (
 app.MapPost("/api/callbacks/{contextId}", async (
     [FromBody] CloudEvent[] cloudEvents,
     [FromRoute] string contextId,
-    //[Required] string callerId,
     [Required] string textToRead,
     CallAutomationClient callAutomationClient, 
     IOptions<CallConfiguration> callConfiguration, 
@@ -101,7 +92,7 @@ app.MapPost("/api/callbacks/{contextId}", async (
         var callConnection = callAutomationClient.GetCallConnection(@event.CallConnectionId);
         var callConnectionMedia = callConnection.GetCallMedia();
 
-        await eventHandler.HandleAsync(/*callerId*/textToRead, @event, callConnection, callConnectionMedia);
+        await eventHandler.HandleAsync(textToRead, @event, callConnection, callConnectionMedia);
     }
     return Results.Ok();
 }).Produces(StatusCodes.Status200OK);
@@ -111,29 +102,18 @@ JsonObject GetJsonObject(BinaryData data)
     return JsonNode.Parse(data).AsObject();
 }
 
-string GetCallerId(JsonObject jsonObject)
-{
-    return (string)(jsonObject["from"]["rawId"]);
-}
-
 string GetTextToRead()
 {
     return "Hello World";
 }
 
+string GetCallerId(JsonObject jsonObject)
+{
+    return (string)(jsonObject["from"]["rawId"]);
+}
 string GetIncomingCallContext(JsonObject jsonObject)
 {
     return (string)jsonObject["incomingCallContext"];
-}
-
-string GetCustomerName(string callerId)
-{
-    return "Bob";
-}
-
-string GetCustomerAddress(string callerId)
-{
-    return "3910 163rd Avenue North East, Redmond, Washington 98052";
 }
 
 string GetPlaySourceId(string name)
