@@ -1,6 +1,5 @@
 ﻿using Azure.Communication.CallAutomation;
 using Azure.Communication;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace TryPstnBackendService
 {
@@ -127,11 +126,6 @@ namespace TryPstnBackendService
 
             //Start recognition 
             await callConnectionMedia.StartRecognizingAsync(recognizeOptions);
-        }
-
-        string GetPlaySourceId(string name)
-        {
-            return playSourceBaseId + name;
         }
     }
 }

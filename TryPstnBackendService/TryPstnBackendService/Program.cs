@@ -3,12 +3,13 @@ using Azure.Messaging;
 using Azure.Messaging.EventGrid;
 using Azure.Messaging.EventGrid.SystemEvents;
 using CallAutomation_TryPstnBackendService;
-using TryPstnBackendService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Nodes;
+using TryPstnBackendService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,7 @@ var outgoingCallIdentity = await app.ProvisionAzureCommunicationServicesIdentity
 // api to answer incoming calls
 app.MapPost("/api/incomingCall", async (
     [FromBody] EventGridEvent[] eventGridEvents,
+    [Required] string textToRead,
     ILogger<Program> logger) =>
 {
     foreach (var eventGridEvent in eventGridEvents)
@@ -61,7 +63,6 @@ app.MapPost("/api/incomingCall", async (
             }
         }
         var jsonObject = GetJsonObject(eventGridEvent.Data);
-        var textToRead = GetTextToRead();
         var callerId = GetCallerId(jsonObject);
         eventHandler = new ContosoWorkflowHandler(playSourceBaseId, callerId);
         var incomingCallContext = GetIncomingCallContext(jsonObject);
@@ -92,6 +93,8 @@ app.MapPost("/api/callbacks/{contextId}", async (
         var callConnection = callAutomationClient.GetCallConnection(@event.CallConnectionId);
         var callConnectionMedia = callConnection.GetCallMedia();
 
+        textToRead = Base64UrlEncoder.Decode(textToRead);
+
         await eventHandler.HandleAsync(textToRead, @event, callConnection, callConnectionMedia);
     }
     return Results.Ok();
@@ -102,23 +105,14 @@ JsonObject GetJsonObject(BinaryData data)
     return JsonNode.Parse(data).AsObject();
 }
 
-string GetTextToRead()
-{
-    return "Hello World";
-}
-
 string GetCallerId(JsonObject jsonObject)
 {
     return (string)(jsonObject["from"]["rawId"]);
 }
+
 string GetIncomingCallContext(JsonObject jsonObject)
 {
     return (string)jsonObject["incomingCallContext"];
-}
-
-string GetPlaySourceId(string name)
-{
-    return playSourceBaseId + name;
 }
 
 // Configure the HTTP request pipeline.
