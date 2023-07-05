@@ -46,10 +46,6 @@ namespace TryPstnBackendService
                         else
                             logger.LogError($"Unexpected recognize event result identified for connection id: {@event.CallConnectionId}");
                         break;
-                    // TO-DO: Case for speech input recognition
-                    /*case SpeechResult speechResult:
-                        var speech = speechResult.Speech;
-                        break;*/
                     default:
                         logger.LogError($"Unexpected recognize event result identified for connection id: {@event.CallConnectionId}");
                         break;
