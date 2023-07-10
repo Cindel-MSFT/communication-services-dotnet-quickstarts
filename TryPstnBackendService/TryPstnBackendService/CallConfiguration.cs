@@ -18,12 +18,12 @@
         /// <summary>
         /// The phone number to add to the call
         /// </summary>
-        public string TargetPhoneNumber { get; set; }
+        //public string TargetPhoneNumber { get; set; }
 
         /// <summary>
         /// The phone number associated with the source. 
         /// </summary>
-        public string SourcePhoneNumber { get; set; }
+        //public string SourcePhoneNumber { get; set; }
 
         /// <summary>
         /// The base url of the application.
